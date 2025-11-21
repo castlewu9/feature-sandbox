@@ -1,10 +1,22 @@
 import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
+import { Button, Divider, LinearProgress, Paper, Snackbar, Stack } from '@mui/material';
+import { Upload } from './components';
+import { uploadFile } from './libs';
 
-function App() {
-  const [count, setCount] = useState(0);
+const App = () => {
+  const [open, setOpen] = useState(false);
+
+  const handleUpload = async (filename, binary, callbackFn) => {
+    console.log('Uploading file:', filename, binary, callbackFn);
+    // Implement the upload logic here, possibly using the uploadFile function from api.js
+    const res = await uploadFile(filename, binary, callbackFn);
+    if (res.ok) {
+      console.log('Upload successful:', res.data);
+    } else {
+      console.error('Upload failed:', res.data);
+      setOpen(true);
+    }
+  };
 
   const handleDownload = async () => {
     try {
@@ -25,25 +37,51 @@ function App() {
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-        <button onClick={handleDownload}>Download Bird</button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
+      <Paper elevation={3} sx={{ backgroundColor: '#f5f5f5', width: '50%' }}>
+        <Stack
+          spacing={2}
+          direction="column"
+          sx={{
+            border: '2px dashed #1976d2',
+            borderRadius: 1,
+            py: 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Upload name="file" onUpload={handleUpload} />
+
+          <Divider sx={{ width: '80%', my: 10 }} />
+          <label htmlFor="download-button">
+            <input
+              style={{ display: 'none' }}
+              id="download-button"
+              name="download-button"
+              type="file"
+              onChange={handleDownload}
+            />
+            <Button color="primary" variant="outlined" component="span">
+              Upload
+            </Button>
+          </label>
+          <LinearProgress />
+        </Stack>
+      </Paper>
+      {/* <Snackbar open={open} autoHideDuration={5000} onClose={() => {}}> */}
+      {/* <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}> */}
+      {/* Upload successful! */}
+      {/* </Alert> */}
+      {/* </Snackbar> */}
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={open}
+        autoHideDuration={5000}
+        onClose={() => setOpen(false)}
+        message="I love snacks"
+        key={'topcenter'}
+      />
     </>
   );
-}
+};
 
 export default App;
