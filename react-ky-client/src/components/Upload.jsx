@@ -1,42 +1,58 @@
-import { useState } from 'react';
-import { Box, Button, LinearProgress, Snackbar, TextField } from '@mui/material';
-import FileHandler from '../libs/FileHandler';
+import { useRef, useState } from 'react';
+import { Box, Button, LinearProgress, Snackbar, TextField, Typography } from '@mui/material';
+import { upload, uploadFile } from '../libs';
 
-function Upload({ name, onUpload }) {
-  const [progress, setProgress] = useState(0);
+function Upload({ name }) {
+  const [uploadProgress, setUploadProgress] = useState({ value: '', percentage: 0 });
+  const uploadRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
-  const handleUpload = (e) => {
-    const file = e.target.files[0];
-    console.log('Selected file:', file);
+  //   const handleUpload = (e) => {
+  //     const file = e.target.files?.[0];
+  //     if (file) {
+  //       uploadRef.current = upload(
+  //         file,
+  //         (progress, loaded, total) => {
+  //           console.log(`Upload progress: ${progress}% (${loaded} of ${total} bytes)`);
+  //           setUploadProgress(progress);
+  //         },
+  //         (result, data) => {
+  //           setUploadProgress(0);
+  //           console.log('Upload complete:', result, data);
+  //           if (result === true) {
+  //             setValue(data.message);
+  //           }
+  //         }
+  //       );
+  //     }
+  //   };
 
-    FileHandler.readFile(file)
-      .then((data) => {
-        console.log('File data:', data);
-        onUpload(file.name, data, (progress) => {
-          const percent = Math.floor(progress.percent * 100);
-          // progressElement.value = percent;
-          console.log(
-            `${percent}% - ${progress.transferredBytes} of ${progress.totalBytes} bytes uploaded`
-          );
+  const handleUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      abortControllerRef.current = new AbortController();
+      await uploadFile(
+        file,
+        300000,
+        (progress, loaded, total) => {
+          console.log(`Upload progress: ${progress}% (${loaded} of ${total} bytes)`);
+          setUploadProgress({ value: `Uploading... ${progress}%`, percentage: progress });
+        },
+        abortControllerRef.current.signal
+      )
+        .then((data) => {
+          setUploadProgress({ value: data.message, percentage: 0 });
+          console.log('Upload complete:', data);
+        })
+        .catch((error) => {
+          console.error('Upload failed:', error);
+          setUploadProgress({ value: `Upload failed: ${error}`, percentage: 0 });
+        })
+        .finally(() => {
+          abortControllerRef.current = null;
         });
-      })
-      .catch((error) => {
-        console.error('Error reading file:', error);
-        Snackbar.open({ message: 'Error reading file', severity: 'error' });
-      });
-
-    // Simulate progress for demonstration purposes
-    // let simulatedProgress = 0;
-    // const interval = setInterval(() => {
-    //   simulatedProgress += 10;
-    //   setProgress(simulatedProgress);
-    //   if (simulatedProgress >= 100) {
-    //     clearInterval(interval);
-    //   }
-    // }, 1000);
+    }
   };
-
-  console.log('Upload component rendered with progress:', progress);
 
   return (
     <Box>
@@ -45,6 +61,7 @@ function Upload({ name, onUpload }) {
         label="Select a file to upload"
         variant="outlined"
         fullWidth
+        value={uploadProgress.value}
         slotProps={{
           input: {
             endAdornment: (
@@ -57,7 +74,7 @@ function Upload({ name, onUpload }) {
                     style={{ display: 'none' }}
                     onChange={handleUpload}
                   />
-                  <Button color="primary" variant="outlined" component="span">
+                  <Button variant="contained" component="span">
                     Upload
                   </Button>
                 </label>
@@ -66,7 +83,24 @@ function Upload({ name, onUpload }) {
           },
         }}
       />
-      <LinearProgress variant="determinate" value={progress} sx={{ mt: 2 }} />
+      <LinearProgress variant="determinate" value={uploadProgress.percentage} sx={{ mt: 2 }} />
+      {/* <Box sx={{ width: '100%', mt: 2 }}>
+        <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 1 }}>
+          {uploadProgress}%
+        </Typography>
+      </Box> */}
+      <Button
+        color="primary"
+        variant="outlined"
+        onClick={() => {
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+          setUploadProgress({ value: 'Aborted', percentage: 0 });
+        }}
+      >
+        Abort
+      </Button>
     </Box>
   );
 }

@@ -1,22 +1,11 @@
 import { useState } from 'react';
 import { Button, Divider, LinearProgress, Paper, Snackbar, Stack } from '@mui/material';
 import { Upload } from './components';
-import { uploadFile } from './libs';
 
 const App = () => {
   const [open, setOpen] = useState(false);
 
-  const handleUpload = async (filename, binary, callbackFn) => {
-    console.log('Uploading file:', filename, binary, callbackFn);
-    // Implement the upload logic here, possibly using the uploadFile function from api.js
-    const res = await uploadFile(filename, binary, callbackFn);
-    if (res.ok) {
-      console.log('Upload successful:', res.data);
-    } else {
-      console.error('Upload failed:', res.data);
-      setOpen(true);
-    }
-  };
+  const handleUpload = async (file, callbackFn) => {};
 
   const handleDownload = async () => {
     try {

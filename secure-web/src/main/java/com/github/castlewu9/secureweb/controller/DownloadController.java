@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
-@RequestMapping("/download")
 @RestController
+@RequestMapping("/download")
 public class DownloadController {
 
   private final ResourceLoader resourceLoader;
