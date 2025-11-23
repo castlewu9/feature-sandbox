@@ -1,71 +1,51 @@
 import { useRef, useState } from 'react';
-import { Box, Button, LinearProgress, Snackbar, TextField, Typography } from '@mui/material';
-import { upload, uploadFile } from '../libs';
+import { Box, Button, LinearProgress, Snackbar, Stack, TextField } from '@mui/material';
+import { upload } from '../libs';
 
-function Upload({ name }) {
-  const [uploadProgress, setUploadProgress] = useState({ value: '', percentage: 0 });
-  const uploadRef = useRef(null);
-  const abortControllerRef = useRef(null);
+const Upload = ({ name = 'Upload', label = 'Label', sx }) => {
+  const [value, setValue] = useState({ progress: 0, message: '' });
+  const abortRef = useRef(null);
 
-  //   const handleUpload = (e) => {
-  //     const file = e.target.files?.[0];
-  //     if (file) {
-  //       uploadRef.current = upload(
-  //         file,
-  //         (progress, loaded, total) => {
-  //           console.log(`Upload progress: ${progress}% (${loaded} of ${total} bytes)`);
-  //           setUploadProgress(progress);
-  //         },
-  //         (result, data) => {
-  //           setUploadProgress(0);
-  //           console.log('Upload complete:', result, data);
-  //           if (result === true) {
-  //             setValue(data.message);
-  //           }
-  //         }
-  //       );
-  //     }
-  //   };
-
-  const handleUpload = async (event) => {
-    const file = event.target.files?.[0];
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
     if (file) {
-      abortControllerRef.current = new AbortController();
-      await uploadFile(
+      abortRef.current = new AbortController();
+      await upload(
+        `http://localhost:8080/upload/file/${file.name}`,
         file,
-        300000,
         (progress, loaded, total) => {
-          console.log(`Upload progress: ${progress}% (${loaded} of ${total} bytes)`);
-          setUploadProgress({ value: `Uploading... ${progress}%`, percentage: progress });
+          console.log(`>> Upload progress: ${progress}% (${loaded} of ${total} bytes)`);
+          setValue({ progress: progress, message: `Uploading... ${progress}%` });
         },
-        abortControllerRef.current.signal
+        abortRef.current.signal
       )
         .then((data) => {
-          setUploadProgress({ value: data.message, percentage: 0 });
-          console.log('Upload complete:', data);
+          console.log('>> Upload complete:', data);
+          setValue({ progress: 100, message: data.message });
         })
         .catch((error) => {
-          console.error('Upload failed:', error);
-          setUploadProgress({ value: `Upload failed: ${error}`, percentage: 0 });
+          console.error('>> Upload failed:', error);
+          setValue({ progress: 0, message: '' });
         })
         .finally(() => {
-          abortControllerRef.current = null;
+          abortRef.current = null;
         });
     }
   };
 
   return (
-    <Box>
+    <Box sx={{ ...sx }}>
       <TextField
         name={name}
-        label="Select a file to upload"
+        label={label}
+        placeholder={label}
         variant="outlined"
         fullWidth
-        value={uploadProgress.value}
+        value={value.message}
         slotProps={{
           input: {
             endAdornment: (
-              <Box sx={{ mx: 1 }}>
+              <Stack spacing={1} direction="row">
                 <label htmlFor={`upload-${name}`}>
                   <input
                     id={`upload-${name}`}
@@ -78,31 +58,33 @@ function Upload({ name }) {
                     Upload
                   </Button>
                 </label>
-              </Box>
+                <Button
+                  color="primary"
+                  variant="outlined"
+                  onClick={() => {
+                    if (abortRef.current) {
+                      abortRef.current.abort();
+                    }
+                    setValue({ progress: 0, message: 'Aborted' });
+                  }}
+                >
+                  Abort
+                </Button>
+              </Stack>
             ),
           },
         }}
       />
-      <LinearProgress variant="determinate" value={uploadProgress.percentage} sx={{ mt: 2 }} />
-      {/* <Box sx={{ width: '100%', mt: 2 }}>
-        <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 1 }}>
-          {uploadProgress}%
-        </Typography>
-      </Box> */}
-      <Button
-        color="primary"
-        variant="outlined"
-        onClick={() => {
-          if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-          }
-          setUploadProgress({ value: 'Aborted', percentage: 0 });
-        }}
-      >
-        Abort
-      </Button>
+      <LinearProgress variant="determinate" value={value.progress} sx={{ mb: 2 }} />
+
+      <Snackbar
+        open={!!value.message}
+        autoHideDuration={6000}
+        onClose={() => setValue({ ...value, message: '' })}
+        message={value.message}
+      />
     </Box>
   );
-}
+};
 
 export default Upload;

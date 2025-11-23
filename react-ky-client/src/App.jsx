@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Divider, LinearProgress, Paper, Snackbar, Stack } from '@mui/material';
+import { Box, Button, Divider, LinearProgress, Paper, Snackbar, Stack } from '@mui/material';
 import { Upload } from './components';
 
 const App = () => {
@@ -26,21 +26,13 @@ const App = () => {
 
   return (
     <>
-      <Paper elevation={3} sx={{ backgroundColor: '#f5f5f5', width: '50%' }}>
-        <Stack
-          spacing={2}
-          direction="column"
-          sx={{
-            border: '2px dashed #1976d2',
-            borderRadius: 1,
-            py: 2,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Upload name="file" onUpload={handleUpload} />
-
-          <Divider sx={{ width: '80%', my: 10 }} />
+      <Paper
+        elevation={3}
+        sx={{ backgroundColor: '#f5f5f5', border: '2px dashed #1976d2', width: '80%' }}
+      >
+        <Box sx={{ p: 4 }}>
+          <Upload name="file" />
+          <Divider sx={{ width: '80%', my: 4 }} />
           <label htmlFor="download-button">
             <input
               style={{ display: 'none' }}
@@ -53,8 +45,7 @@ const App = () => {
               Upload
             </Button>
           </label>
-          <LinearProgress />
-        </Stack>
+        </Box>
       </Paper>
       {/* <Snackbar open={open} autoHideDuration={5000} onClose={() => {}}> */}
       {/* <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}> */}
