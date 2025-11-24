@@ -13,5 +13,6 @@ public class CommonResponse {
 
   private boolean success = true;
   private String message;
+  private String value;
 
 }

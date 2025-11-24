@@ -1,16 +1,13 @@
 package com.github.castlewu9.secureweb.controller;
 
 import com.github.castlewu9.secureweb.model.CommonResponse;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,26 +15,24 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
-@CrossOrigin("*")
 @RestController
-@RequestMapping("/upload")
+@RequestMapping("/api/upload")
 public class UploadController {
 
-  @PostMapping(value = "/file/{filename}")
-  public CommonResponse uploadFile(@PathVariable String filename,
-      @RequestBody InputStream inputStream) {
-    log.info("Uploading file {}}", filename);
-    try (FileOutputStream outputStream = new FileOutputStream("./" + filename)) {
-      IOUtils.copy(inputStream, outputStream);
+  @PostMapping
+  public ResponseEntity<CommonResponse> upload(@RequestParam String filename,
+      InputStream inputStream) {
+    log.info("Uploading file {}", filename);
+    try (FileOutputStream fos = new FileOutputStream(new File("./", filename))) {
+      inputStream.transferTo(fos);
     } catch (Exception e) {
-      log.error(e.getMessage());
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+      log.error("Uploading failure: {}", filename, e);
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Can't upload file");
     }
-    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-//    return CommonResponse.builder().success(true).message(filename).build();
+    return ResponseEntity.ok(CommonResponse.builder().value(filename).build());
   }
 
-  @PostMapping("/file")
+  @PostMapping("/file2")
   public String uploadFileByForm(@RequestParam("file") MultipartFile file) {
     if (!file.isEmpty()) {
       try {
